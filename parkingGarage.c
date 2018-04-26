@@ -31,18 +31,15 @@ int main(void)
 	int access_count = 0;
 	while (1)
 	{
-		if (vechicles_left == 0)
-		{
-			closed();
-		}
-		PB_value = *(PUSHBUTTON_BASE_ptr);
-		if (*(SLIDER_SWITCH_BASE_ptr) == 256 && access_count == 0)
+		if (*(SLIDER_SWITCH_BASE_ptr) == 512 && access_count == 0)
 		{
 			setRate();
+			*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(0);
 		}
-		else if (*(SLIDER_SWITCH_BASE_ptr) == 128 && access_count >= 1)
+		else if (*(SLIDER_SWITCH_BASE_ptr) == 256 && access_count >= 1)
 		{
-			setNumVehicles()
+			setNumVehicles();
+			*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(0);
 		}
 		else
 		{
@@ -118,84 +115,7 @@ int main(void)
 					}
 				}
 			}
-
-			/*if (truck_rate > 0 && suv_rate > 0 && sedan_rate > 0)
-			{
-				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(321);
-				if (*(PUSHBUTTON_BASE_ptr) == 8)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(trucks_left);
-				}
-				if (*(PUSHBUTTON_BASE_ptr) == 4)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(suvs_left);
-				}
-				if (*(PUSHBUTTON_BASE_ptr) == 2)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(sedans_left);
-				}
-			}
-			if (truck_rate == 0 && suv_rate > 0 && sedan_rate > 0)
-			{
-				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(-21);
-				if (*(PUSHBUTTON_BASE_ptr) == 4)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(suvs_left);
-				}
-				if (*(PUSHBUTTON_BASE_ptr) == 2)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(sedans_left);
-				}
-			}
-			if (truck_rate > 0 && suv_rate == 0 && sedan_rate > 0)
-			{
-				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(3-1);
-				if (*(PUSHBUTTON_BASE_ptr) == 8)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(trucks_left);
-				}
-				if (*(PUSHBUTTON_BASE_ptr) == 2)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(sedans_left);
-				}
-			}
-			if (truck_rate > 0 && suv_rate > 0 && sedan_rate == 0)
-			{
-				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(32-);
-				if (*(PUSHBUTTON_BASE_ptr) == 8)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(trucks_left);
-				}
-				if (*(PUSHBUTTON_BASE_ptr) == 4)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(suvs_left);
-				}
-			}
-			if (truck_rate == 0 && suv_rate == 0 && sedan_rate > 0)
-			{
-				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(--1);
-				if (*(PUSHBUTTON_BASE_ptr) == 2)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(sedans_left);
-				}
-			}
-			if (truck_rate == 0 && suv_rate > 0 && sedan_rate == 0)
-			{
-				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(-2-);
-				if (*(PUSHBUTTON_BASE_ptr) == 4)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(suvs_left);
-				}
-			}
-			if (truck_rate > 0 && suv_rate == 0 && sedan_rate == 0)
-			{
-				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(3--);
-				if (*(PUSHBUTTON_BASE_ptr) == 8)
-				{
-					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(trucks_left);
-				}
-			}
-			payment(*(HEX3_HEX0_BASE_ptr), *(PUSHBUTTON_ptr), *(GREEN_LED_BASE_ptr), *(SLIDER_SWITCH_BASE_ptr));*/
+			payment();
 		}
 		usleep(300000);
 	}
@@ -203,14 +123,15 @@ int main(void)
 /*Set the parking lot prices*/
 void setRate()
 {
-	int value1 = *(SLIDER_SWITCH_BASE_ptr) >> 4;
-	int value2 = *(SLIDER_SWITCH_BASE_ptr) & 00001111;
 	int i = 0;
 	while (i == 0) {
+		int value1 = (*(SLIDER_SWITCH_BASE_ptr) >> 4) & 7;
+		int value2 = *(SLIDER_SWITCH_BASE_ptr) & 15;
 		if (*(PUSHBUTTON_BASE_ptr) == 8)
 		{
 			truck_rate = (value * 10) + value2;
 			*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(truck_rate);
+			usleep(3000000);
 			access_count++;
 			i++;
 		}
@@ -218,6 +139,7 @@ void setRate()
 		{
 			suv_rate = (value * 10) + value2;
 			*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(suv_rate);
+			usleep(3000000);
 			access_count++;
 			i++;
 		}
@@ -225,6 +147,7 @@ void setRate()
 		{
 			sedan_rate = (value * 10) + value2;
 			*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(sedan_rate);
+			usleep(3000000);
 			access_count++;
 			i++;
 		}
@@ -234,7 +157,8 @@ void setRate()
 void closed() {
 	while (1)
 	{
-		*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(---);
+		alt_alarm_stop(&alarm1);
+		*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(-1);
 	}
 }
 /*
@@ -242,21 +166,18 @@ Sets the number of vehichles the lot can hold;
 */
 void setNumVehicles()
 {
-	int value1 = *(SLIDER_SWITCH_BASE_ptr) >> 4;//retrieves the tens place digit
-	int value2 = *(SLIDER_SWITCH_BASE_ptr) & 00001111;//retrieves the ones place digit
 	int i = 0;
 	while (i == 0) {
+		int value1 = (*(SLIDER_SWITCH_BASE_ptr) >> 4) & 15;//retrieves the tens place digit
+		int value2 = *(SLIDER_SWITCH_BASE_ptr) & 15;//retrieves the ones place digit
 		if (*(PUSHBUTTON_BASE_ptr) == 8) {
 			if (truck_rate > 0)
 			{
 				trucks_left = (value * 10) + value2;
 				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(truck_rate);
+				usleep(3000000);
 				num_set++;
 				i++
-			}
-			else
-			{
-				i++;
 			}
 		}
 		if (*(PUSHBUTTON_BASE_ptr) == 4) {
@@ -264,12 +185,9 @@ void setNumVehicles()
 			{
 				suvs_left = (value * 10) + value2;
 				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(suv_rate);
+				usleep(3000000);
 				num_set++;
 				i++
-			}
-			else
-			{
-				i++;
 			}
 		}
 		if (*(PUSHBUTTON_BASE_ptr) == 2) {
@@ -277,12 +195,9 @@ void setNumVehicles()
 			{
 				sedans_left = (value * 10) + value2;
 				*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(sedan_rate);
+				usleep(3000000);
 				num_set++;
 				i++
-			}
-			else
-			{
-				i++;
 			}
 		}
 	}
@@ -296,6 +211,7 @@ returns bills
 void payment()
 {
 	alt_alarm_stop(&alarm1);
+	int i = 0;
 	while (i == 0)
 	{
 		if (*(SLIDER_SWITCH_BASE_ptr) != 1)
@@ -362,6 +278,7 @@ void payment()
 				}
 				else
 				{
+					alt_alarm_stop(&alarm1);
 					if (deposit_ammount >= truck_rate)
 					{
 						trucks_left--;
@@ -370,6 +287,12 @@ void payment()
 						*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(change);
 						*(GREEN_LED_BASE_ptr) = 128;
 						i++;
+						deposit_ammount = 0;
+						usleep(1000000);
+						if (trucks_left == 0)
+						{
+							closed();
+						}
 					}
 					else
 					{
@@ -441,6 +364,7 @@ void payment()
 			}
 			else
 			{
+				alt_alarm_stop(&alarm1);
 				if (deposit_ammount >= suv_rate)
 				{
 					suvs_left--;
@@ -449,6 +373,12 @@ void payment()
 					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(change);
 					*(GREEN_LED_BASE_ptr) = 128;
 					i++;
+					deposit_ammount = 0;
+					usleep(1000000);
+					if (suvs_left == 0)
+					{
+						closed();
+					}
 				}
 				else
 				{
@@ -519,6 +449,7 @@ void payment()
 			}
 			else
 			{
+				alt_alarm_stop(&alarm1);
 				if (deposit_ammount >= sedan_rate)
 				{
 					sedans_left--;
@@ -527,6 +458,12 @@ void payment()
 					*(HEX3_HEX0_BASE_ptr) = HEX3to0_display(change);
 					*(GREEN_LED_BASE_ptr) = 128;
 					i++;
+					deposit_ammount = 0;
+					usleep(1000000);
+					if (sedans_left == 0)
+					{
+						closed();
+					}
 				}
 				else
 				{
@@ -547,6 +484,9 @@ int HEX3to0_display(int value)
 {
 	if (value == 0) {
 		return((table[0] << 16) | (table[0]) << 8);
+	}
+	if (value < 0) {
+		return(table[11] << 16 | table[11] << 8 | table[11]);
 	}
 	int val = value;
 	int final = 0;
