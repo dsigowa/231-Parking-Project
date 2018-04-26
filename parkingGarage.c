@@ -8,9 +8,9 @@
 int deposit_ammount = 0;
 int vechicles_left = 0;
 int parking_rate = 0;
-int HEX3to0_display (int value, unsigned char * table);
+int HEX3to0_display (int value);
 static alt_alarm alarm1;
-unsigned char table[10] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7c, 0x07, 0x7f, 0x67};
+unsigned char table[10] = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7c, 0x07, 0x7f, 0x67, 0x1};
 volatile int *GREEN_LED_BASE_ptr  = (int *) GREEN_LED_BASE;
 volatile int * PUSHBUTTON_BASE_ptr = (int *) PUSHBUTTON_BASE;
 volatile int * HEX3_HEX0_BASE_ptr = (int *) HEX3_HEX0_BASE;
@@ -22,24 +22,22 @@ int main(void)
 	int access_count = 0;
 	while(1)
 	{
-		if(vechicles_left == 0)
-		{
-			closed();
-		}
-		PB_value = *(PUSHBUTTON_BASE_ptr);
-		if(SLIDER_SWITCH_BASE_ptr == 256 && access_count == 0)
+		if(*(SLIDER_SWITCH_BASE_ptr) == 512 && access_count == 0)
 		{
 			access_count++;
 			setRate();
+			*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(0);
 		}
-		else if(SLIDER_SWITCH_BASE_ptr == 256 && access_count == 1)
+		else if(*(SLIDER_SWITCH_BASE_ptr) == 256 && access_count == 1)
 		{
-			setNumVehicles()
+			access_count++;
+			setNumVehicles();
+			*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(0);
 		}
-		else
+		else if(access_count == 2)
 		{
-			*(HEX3_HEX0) =  HEX3to0_display(vechicles_left);
-			payment(HEX3_HEX0_BASE_ptr,PUSHBUTTON_ptr,GREEN_LED_BASE_ptr,SLIDER_SWITCH_BASE_ptr);
+			*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(vechicles_left);
+			payment();
 		}
 		usleep(300000);
 	}
@@ -47,14 +45,15 @@ int main(void)
 /*Set the parking lot prices*/
 void setRate()
 {
-	int value1 = SLIDER_SWITCH_BASE >> 4;
-	int value2 = SLIDER_SWITCH_BASE & 00001111;
 	int i = 0;
 	while(i == 0){
-		if(PUSHBUTTON_BASE_ptr == 8)
+		int value1 = (*(SLIDER_SWITCH_BASE_ptr) >> 4) & 7;
+		int value2 = *(SLIDER_SWITCH_BASE_ptr) & 15;
+		if(*(PUSHBUTTON_BASE_ptr) == 8)
 		{
-			parking_rate = (value*10)+value2;
+			parking_rate = (value1*10)+value2;
 			*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(parking_rate);
+			usleep(3000000);
 			i++;
 		}
 	}
@@ -63,81 +62,84 @@ void setRate()
 void closed(){
 	while(1)
 	{
-		*(HEX3_HEX0) =  HEX3to0_display();/*todo figure out how to display line*/;
-	}	
+		alt_alarm_stop(&alarm1);
+		*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(-11);/*todo figure out how to display line*/;
+	}
 }
 /*
 Sets the number of vehichles the lot can hold;
 */
 void setNumVehicles()
 {
-	int value1 = SLIDER_SWITCH_BASE >> 4;//retrieves the tens place digit
-	int value2 = SLIDER_SWITCH_BASE & 00001111;//retrieves the ones place digit
 	int i = 0;
 	while(i == 0){
-		if(PUSHBUTTON_BASE_ptr == 8){
-			vechicles_left = (value*10)+value2;
-			*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(parking_rate);
-			i++
+		int value1 = (*(SLIDER_SWITCH_BASE_ptr) >> 4) & 15;//retrieves the tens place digit
+		int value2 = *(SLIDER_SWITCH_BASE_ptr) & 15;//retrieves the ones place digit
+		if(*(PUSHBUTTON_BASE_ptr) == 8){
+			vechicles_left = (value1*10)+value2;
+			*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(vechicles_left);
+			usleep(3000000);
+			i++;
 		}
 	}
 }
 /*
 Performs The payment oppertations:
-takes bills, 
-returns change, 
+takes bills,
+returns change,
 returns bills
 */
 void payment()
 {
 	alt_alarm_stop(&alarm1);
+	int i = 0;
 	while(i == 0)
 	{
-		if(SLIDER_SWITCH_BASE_ptr != 1)
+		if(*(SLIDER_SWITCH_BASE_ptr) != 1)
 		{
 			/*switch cases for button combos*/
-			if(PUSHBUTTON_BASE_ptr == 8)
+			if(*(PUSHBUTTON_BASE_ptr) == 8)
 			{
 				alt_alarm_stop(&alarm1);
 				deposit_ammount+= 1;
 				*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(1);
 				alt_alarm_start(&alarm1, 30 * alt_ticks_per_second(), myalarm_handler, NULL);
 				usleep(300000);
-			}else if( PUSHBUTTON_BASE_ptr == 4)
+			}else if( *(PUSHBUTTON_BASE_ptr) == 4)
 			{
 				alt_alarm_stop(&alarm1);
 				deposit_ammount += 2;
 				*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(2);
 				alt_alarm_start(&alarm1, 30 * alt_ticks_per_second(), myalarm_handler, NULL);
 				usleep(300000);
-			}else if(PUSHBUTTON_BASE_ptr == 12)
+			}else if(*(PUSHBUTTON_BASE_ptr) == 12)
 			{
 				alt_alarm_stop(&alarm1);
 				deposit_ammount +=5;
 				*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(5);
 				alt_alarm_start(&alarm1, 30 * alt_ticks_per_second(), myalarm_handler, NULL);
 				usleep(300000);
-			}else if(PUSHBUTTON_BASE_ptr == 2)
+			}else if(*(PUSHBUTTON_BASE_ptr) == 2)
 			{
 				alt_alarm_stop(&alarm1);
 				deposit_ammount +=10;
-				*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(10)
+				*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(10);
 				alt_alarm_start(&alarm1, 30 * alt_ticks_per_second(), myalarm_handler, NULL);
 				usleep(300000);
-			}else if(PUSHBUTTON_BASE_ptr == 9)
+			}else if(*(PUSHBUTTON_BASE_ptr) == 9)
 			{
 				alt_alarm_stop(&alarm1);
 				deposit_ammount +20;
-				*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(20)
+				*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(20);
 				alt_alarm_start(&alarm1, 30 * alt_ticks_per_second(), myalarm_handler, NULL);
 				usleep(300000);
-			}else if(PUSHBUTTON_BASE_ptr == 6)
+			}else if(*(PUSHBUTTON_BASE_ptr) == 6)
 			{
 				alt_alarm_stop(&alarm1);
 				deposit_ammount +=50;
 				alt_alarm_start(&alarm1, 30 * alt_ticks_per_second(), myalarm_handler, NULL);
 				usleep(300000);
-			}else if(HEX3_HEX0 == 14)
+			}else if(*(PUSHBUTTON_BASE_ptr) == 14)
 			{
 				alt_alarm_stop(&alarm1);
 				deposit_ammount += 100;
@@ -146,6 +148,7 @@ void payment()
 			}
 		}else
 		{
+			alt_alarm_stop(&alarm1);
 			if(deposit_ammount>= parking_rate)
 			{
 				vechicles_left--;
@@ -154,6 +157,12 @@ void payment()
 				*(HEX3_HEX0_BASE_ptr) =  HEX3to0_display(change);
 				*(GREEN_LED_BASE_ptr) = 128;
 				i++;
+				deposit_ammount = 0;
+				usleep(1000000);
+				if(vechicles_left == 0)
+				{
+					closed();
+				}
 			}else
 			{
 				returnBills();
@@ -163,7 +172,7 @@ void payment()
 	}
 }
 /*function to return bills and set red LED*/
-void returnBills(int * LED)
+void returnBills()
 {
 	*RED_LED_BASE_ptr = 1;
 	deposit_ammount = 0;
@@ -172,6 +181,9 @@ int HEX3to0_display (int value)
 {
 	if(value == 0){
 		return((table[0] << 16) | (table[0]) << 8);
+	}
+	if(value == -11){
+		return((table[11])<<16|table[11]<<8|table[11]);
 	}
 	int val = value;
 	int final = 0;
